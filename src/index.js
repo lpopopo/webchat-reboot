@@ -53,7 +53,7 @@ router.post("/chat", async (ctx) => {
             })
         } else {
             // 发送https请求
-            const parsedUrl = url.parse(respone[0].url);
+            const parsedUrl = url.parse(respone.data[0].url);
             const options = {
                 hostname: parsedUrl.hostname,
                 port: 443,
