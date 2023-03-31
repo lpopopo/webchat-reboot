@@ -16,7 +16,7 @@ const requestAi = async (model, content) => {
         case AI_MODEL_ENUM.CHAT:
             const aiRes = await iamgeOpenaiRobot.createChatCompletion({
                 model: "gpt-3.5-turbo",
-                messages: [{ "role": "system", "content": content }],
+                messages: [{ "role": "user", "content": content }],
             })
             const respone = aiRes.data.choices.filter(choice => choice.finish_reason === "stop")
             return respone[0] ? respone[0].message.content : 'error'
