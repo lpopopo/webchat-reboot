@@ -53,7 +53,7 @@ router.post("/chat", async (ctx) => {
             })
         } else {
             // 发送https请求
-            const parsedUrl = url.parse(respone.data[0].url);
+            const parsedUrl = url.parse(respone[0].url);
             const options = {
                 hostname: parsedUrl.hostname,
                 port: 443,
@@ -61,11 +61,9 @@ router.post("/chat", async (ctx) => {
                 method: 'GET'
             };
             https.get(options, (res) => {
-                // 定义一个空的Buffer对象，用于存放数据块
                 let rawData = Buffer.from('');
 
                 res.on('data', (chunk) => {
-                    // 每次有数据块返回时，将其拼接到rawData中
                     rawData = Buffer.concat([rawData, chunk]);
                 });
 

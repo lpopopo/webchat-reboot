@@ -6,27 +6,26 @@ const {
 } = require("./utils/ai_model")
 
 
-/** 图片生成机器人 */
-const imageConfiguration = new Configuration(openAiConfig);
-const iamgeOpenaiRobot = new OpenAIApi(imageConfiguration);
+const configuration = new Configuration(openAiConfig);
+const OpenaiRobot = new OpenAIApi(configuration);
 
 
 const requestAi = async (model, content) => {
     switch (model) {
         case AI_MODEL_ENUM.CHAT:
-            const aiRes = await iamgeOpenaiRobot.createChatCompletion({
+            const aiRes = await OpenaiRobot.createChatCompletion({
                 model: "gpt-3.5-turbo",
                 messages: [{ "role": "user", "content": content }],
             })
             const respone = aiRes.data.choices.filter(choice => choice.finish_reason === "stop")
             return respone[0] ? respone[0].message.content : 'error'
         case AI_MODEL_ENUM.IMAGE:
-            const aiImagesRes = await iamgeOpenaiRobot.createImage({
+            const aiImagesRes = await OpenaiRobot.createImage({
                 prompt: content,
                 n: 1,
                 size: "512x512"
             })
-            return aiImagesRes.data
+            return aiImagesRes.data.data
         default:
             return "mode error"
     }
