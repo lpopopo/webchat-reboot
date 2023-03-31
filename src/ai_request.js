@@ -1,13 +1,13 @@
 const { Configuration, OpenAIApi } = require('openai')
 /** config */
-const openAiConfig = require("./config/openAi")
+const openAiConfig = require("./config/openAi.json")
 const {
     AI_MODEL_ENUM
 } = require("./utils/ai_model")
 
 
 /** 图片生成机器人 */
-const imageConfiguration = new Configuration(openAiConfig.image);
+const imageConfiguration = new Configuration(openAiConfig);
 const iamgeOpenaiRobot = new OpenAIApi(imageConfiguration);
 
 

@@ -32,7 +32,6 @@ let model_status = AI_MODEL_ENUM.CHAT
 router.post("/chat", async (ctx) => {
     const postData = ctx.request.body;
     const { webhookUrl, text, image, from } = postData
-    const model = parsedUrl.query.key || "lp-model"
     if (AI_MODEL.includes(text.content.slice("@问答小助手".length).trim())) {
         model_status = getModelStatus(text.content.slice("@问答小助手".length).trim())
         await Axios.post(webhookUrl, {
@@ -44,7 +43,7 @@ router.post("/chat", async (ctx) => {
         return
     } else {
         // 根据model 调用不同的openai 接口
-        const respone = await requestAi(model_status, text.content.slice("@问答小助手".length), model)
+        const respone = await requestAi(model_status, text.content.slice("@问答小助手".length))
         if (model_status === AI_MODEL_ENUM.CHAT) {
             Axios.post(webhookUrl, {
                 "msgtype": "markdown",
