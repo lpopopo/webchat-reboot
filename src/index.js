@@ -2,6 +2,10 @@ const Koa = require("koa")
 const Router = require('@koa/router');
 const Axios = require("axios")
 const bodyParser = require('koa-bodyparser');
+const https = require('https');
+const crypto = require('crypto');
+const url = require('url');
+const Buffer = require('buffer').Buffer;
 
 const {
     AI_MODEL,
@@ -28,8 +32,9 @@ let model_status = AI_MODEL_ENUM.CHAT
 router.post("/chat", async (ctx) => {
     const postData = ctx.request.body;
     const { webhookUrl, text, image, from } = postData
-    if (AI_MODEL.includes(text.content.slice("@chat-robot".length).trim())) {
-        model_status = getModelStatus(text.content.slice("@chat-robot".length).trim())
+    const model = parsedUrl.query.key || "lp-model"
+    if (AI_MODEL.includes(text.content.slice("@问答小助手".length).trim())) {
+        model_status = getModelStatus(text.content.slice("@问答小助手".length).trim())
         await Axios.post(webhookUrl, {
             "msgtype": "text",
             "text": {
@@ -39,7 +44,7 @@ router.post("/chat", async (ctx) => {
         return
     } else {
         // 根据model 调用不同的openai 接口
-        const respone =  await requestAi(model_status, text.content.slice("@chat-robot".length))
+        const respone = await requestAi(model_status, text.content.slice("@问答小助手".length), model)
         if (model_status === AI_MODEL_ENUM.CHAT) {
             Axios.post(webhookUrl, {
                 "msgtype": "markdown",
@@ -48,30 +53,43 @@ router.post("/chat", async (ctx) => {
                 }
             })
         } else {
-            Axios.post(webhookUrl, {
-                "msgtype": "markdown",
-                "markdown": {
-                    "content": `
-                    [生成的图片链接](${respone[0].url})
-                    `
-                }
-            })
+            // 发送https请求
+            const parsedUrl = url.parse(respone[0].url);
+            const options = {
+                hostname: parsedUrl.hostname,
+                port: 443,
+                path: parsedUrl.path,
+                method: 'GET'
+            };
+            https.get(options, (res) => {
+                // 定义一个空的Buffer对象，用于存放数据块
+                let rawData = Buffer.from('');
+
+                res.on('data', (chunk) => {
+                    // 每次有数据块返回时，将其拼接到rawData中
+                    rawData = Buffer.concat([rawData, chunk]);
+                });
+
+                res.on('end', () => {
+                    // 计算图片数据块的md5值
+                    const md5sum = crypto.createHash('md5');
+                    md5sum.update(rawData);
+                    const md5Img = md5sum.digest('hex');
+
+                    const base64Img = rawData.toString('base64').replaceAll("\n", "");
+                    Axios.post(webhookUrl, {
+                        "msgtype": "image",
+                        "image": {
+                            "base64": base64Img,
+                            "md5": md5Img
+                        }
+                    })
+                });
+            }).on('error', (err) => {
+                console.error(err);
+            });
         }
     }
-    // const aiRes = await openai.createChatCompletion({
-    //     model: "gpt-3.5-turbo",
-    //     messages: [{ "role": "user", "content": text.content.slice("@chat-robot".length) }],
-    // })
-    // aiRes.data.choices.forEach(choice => {
-    //     if (choice.finish_reason === "stop") {
-    //         Axios.post(webhookUrl, {
-    //             "msgtype": "text",
-    //             "text": {
-    //                 "content": choice ? choice.message.content : 'error'
-    //             }
-    //         })
-    //     }
-    // })
 })
 
 app.listen(3003, () => {
